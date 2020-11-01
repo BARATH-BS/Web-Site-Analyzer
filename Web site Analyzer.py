@@ -2,6 +2,7 @@ import re
 import requests
 import bs4
 import string
+import csv
 
 
 def get_home_url():
@@ -77,7 +78,11 @@ def get_text(content):
     :param content:
     :return: string format of content
     """
-    return " ".join(content)
+    result_text = ""
+    for con in content:
+        if len(con.strip()) > 0:
+            result_text = result_text + " " + con
+    return result_text
 
 
 def remove_punctuation(in_str):
@@ -100,16 +105,21 @@ def write_links(internal, external):
     """
     with open('InternalLinks.txt', mode='w') as content:
         for link in internal:
-            content.write(link+"\n")
+            content.write(link + "\n")
     with open('ExternalLinks.txt', mode='w') as content:
         for link in external:
-            content.write(link+"\n")
+            content.write(link + "\n")
 
 
 def write_text(internal, url):
+    """
+    :param internal:
+    :param url:
+    writes all text from the webpage to TextContent
+    """
     for link in internal:
         if url not in link:
-            link = url+"/"+link
+            link = url + "/" + link
         soup_instance = get_soup(link)
         list_format = get_text_list_format(soup_instance)
         no_stop_words = remove_stopwords(list_format)
@@ -117,11 +127,15 @@ def write_text(internal, url):
         text = remove_punctuation(text_format)
         print(text)
         with open('TextContent.txt', mode='a', encoding='utf-32') as content:
-            content.write(link+"\n")
-            content.write(text+"\n")
+            content.write(link + "\n")
+            content.write(text + "\n")
 
 
 def get_title(soup):
+    """
+    :param soup:
+    :return: title of the soup element if exist
+    """
     title = soup.select('title')
     if len(title) == 0:
         return "encoding decoding issues"
@@ -130,6 +144,12 @@ def get_title(soup):
 
 
 def write_page_title(internal, external, url):
+    """
+    :param internal:
+    :param external:
+    :param url:
+    :return: writes the title of all links
+    """
     with open('Title.txt', mode='a') as content:
         content.write("Internal Link Titles\n")
     for link in internal:
@@ -149,6 +169,10 @@ def write_page_title(internal, external, url):
 
 
 def get_meta(soup):
+    """
+    :param soup:
+    :return: meta data of the soup element if exist
+    """
     meta = soup.select('meta')
     if len(meta) == 0:
         meta = ["encoding decoding issues"]
@@ -158,6 +182,12 @@ def get_meta(soup):
 
 
 def write_meta_data(internal, external, url):
+    """
+    :param internal:
+    :param external:
+    :param url:
+    :return:
+    """
     with open('Metadata.txt', mode='a') as content:
         content.write("Internal Link meta data\n")
     for link in internal:
@@ -184,6 +214,107 @@ def write_main_page(text_content):
         content.write(text_content)
 
 
+def get_uni_gram():
+    file = open('HomePageContent.txt')
+    counts = {}
+    for line in file:
+        line = line.lower()
+        words = line.split()
+        for word in words:
+            if word not in counts:
+                counts[word] = 1
+            else:
+                counts[word] += 1
+    order = list()
+    for key, val in list(counts.items()):
+        order.append((val, key))
+    order.sort(reverse=True)
+    return order
+
+
+def write_uni_grams():
+    file = open('top20_uni_gram.csv', mode="a", encoding='utf-8', newline='')
+    writer = csv.writer(file, delimiter=',')
+    writer.writerow(['count', 'word'])
+    uni_gram_values = get_uni_gram()
+    for key, val in uni_gram_values[:20]:
+        writer.writerow([key, val])
+    file.close()
+    file = open('uni_gram.csv', mode="a", encoding='utf-8', newline='')
+    writer = csv.writer(file, delimiter=',')
+    writer.writerow(['count', 'word'])
+    for key, val in uni_gram_values:
+        writer.writerow([key, val])
+    file.close()
+
+
+def get_bi_grams():
+    file = open('HomePageContent.txt')
+    counts = {}
+    content = file.readlines()[0].split(" ")
+    for i in range(len(content)):
+        word_1 = content[i - 1].strip()
+        word_2 = content[i].strip()
+        word = word_1 + " " + word_2
+        word = word.lower()
+        if word not in counts:
+            counts[word] = 1
+        else:
+            counts[word] += 1
+    order = list()
+    for key, val in list(counts.items()):
+        order.append((val, key))
+    order.sort(reverse=True)
+    return order
+
+
+def write_bi_grams():
+    file = open('top20_bi_gram.csv', mode="a", encoding='utf-8', newline='')
+    writer = csv.writer(file, delimiter=',')
+    writer.writerow(['count', 'word'])
+    uni_gram_values = get_bi_grams()
+    for key, val in uni_gram_values[:20]:
+        writer.writerow([key, val])
+    file.close()
+    file = open('bi_gram.csv', mode="a", encoding='utf-8', newline='')
+    writer = csv.writer(file, delimiter=',')
+    writer.writerow(['count', 'word'])
+    for key, val in uni_gram_values:
+        writer.writerow([key, val])
+    file.close()
+
+
+def get_size(url):
+    return url
+
+
+'''
+    import urllib.request
+    site = urllib.request.urlopen(url)
+    try:
+        if type(site.length) == int:
+        return float(site.length / 1000)
+        else:
+            return "Not Known"
+    except:
+        return "error"
+'''
+
+
+def write_site_size(internal, external, url):
+    file = open('SiteSize.csv', mode="a", encoding='utf-8', newline='')
+    writer = csv.writer(file, delimiter=',')
+    writer.writerow(['Site', 'Size(in kb)'])
+    for link in internal:
+        if url in link:
+            size = get_size(link)
+            writer.writerow([link, size])
+    for link in external:
+        size = get_size(link)
+        writer.writerow([url, size])
+    file.close()
+
+
 home_url = get_home_url()
 home_soup = get_soup(home_url)
 internal_link, external_link = get_links(home_soup, home_url)
@@ -196,4 +327,7 @@ text_list = get_text_list_format(home_soup)
 no_stop_words_list = remove_stopwords(text_list)
 text = get_text(no_stop_words_list)
 no_punctuation_text = remove_punctuation(text)
-write_main_page(no_punctuation_text)
+# write_main_page(no_punctuation_text)
+# write_uni_grams()
+# write_bi_grams()
+write_site_size(internal_link, external_link, home_url)
