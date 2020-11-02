@@ -16,7 +16,7 @@ def get_home_url():
 
 def get_soup(url):
     """
-    :param url:
+    :param url: url of the site
     :return: soup variable of the given url
     """
     result = requests.get(url)  # to get the site information
@@ -26,8 +26,8 @@ def get_soup(url):
 
 def get_links(soup, url):
     """
-    :param soup:
-    :param url:
+    :param soup: soup variable of the url
+    :param url: url of the site
     :return: set of internal links and external links of url:
     """
     internal_links = set()  # to store all internal links of the website
@@ -49,7 +49,7 @@ def get_links(soup, url):
 
 def get_text_list_format(soup):
     """
-    :param soup:
+    :param soup: soup variable of the url
     :return: list of all text
     """
     for script in soup(["script", "style"]):
@@ -60,7 +60,7 @@ def get_text_list_format(soup):
 
 def remove_stopwords(input_list):
     """
-    :param input_list:
+    :param input_list: list of words
     :return: input_list without stop words
     """
     from nltk.corpus import stopwords
@@ -75,12 +75,12 @@ def remove_stopwords(input_list):
 
 def get_text(content):
     """
-    :param content:
+    :param content: list of text content
     :return: string format of content
     """
     result_text = ""
     for con in content:
-        if len(con.strip()) > 0:
+        if len(con.strip()) > 0:  # to remove the extra spaces
             result_text = result_text + " " + con
     return result_text
 
@@ -98,8 +98,8 @@ def remove_punctuation(in_str):
 
 def write_links(internal, external):
     """
-    :param internal:
-    :param external:
+    :param internal: set of all internal links
+    :param external: set of all external links
     writes the internal links in InternalLinks.txt file and
     external links in ExternalLinks.txt file
     """
@@ -113,19 +113,18 @@ def write_links(internal, external):
 
 def write_text(internal, url):
     """
-    :param internal:
-    :param url:
+    :param internal: set of internal links
+    :param url: home url
     writes all text from the webpage to TextContent
     """
     for link in internal:
         if url not in link:
             link = url + "/" + link
-        soup_instance = get_soup(link)
-        list_format = get_text_list_format(soup_instance)
-        no_stop_words = remove_stopwords(list_format)
-        text_format = get_text(no_stop_words)
-        text = remove_punctuation(text_format)
-        print(text)
+        soup_instance = get_soup(link)  # generating soup variable
+        list_format = get_text_list_format(soup_instance)  # list format of words
+        no_stop_words = remove_stopwords(list_format)  # list of words without stop words
+        text_format = get_text(no_stop_words)  # list of words to string format
+        text = remove_punctuation(text_format)  # to remove punctuation
         with open('TextContent.txt', mode='a', encoding='utf-32') as content:
             content.write(link + "\n")
             content.write(text + "\n")
@@ -133,10 +132,10 @@ def write_text(internal, url):
 
 def get_title(soup):
     """
-    :param soup:
+    :param soup: soup variable of the url
     :return: title of the soup element if exist
     """
-    title = soup.select('title')
+    title = soup.select('title')  # to select title from the soup
     if len(title) == 0:
         return "encoding decoding issues"
     else:
@@ -145,17 +144,17 @@ def get_title(soup):
 
 def write_page_title(internal, external, url):
     """
-    :param internal:
-    :param external:
-    :param url:
+    :param internal: set of internal links
+    :param external: set of external links
+    :param url: home url
     :return: writes the title of all links
     """
     with open('Title.txt', mode='a') as content:
         content.write("Internal Link Titles\n")
     for link in internal:
         if url in link:
-            soup_instance = get_soup(link)
-            title = get_title(soup_instance)
+            soup_instance = get_soup(link)  # generating soup variable
+            title = get_title(soup_instance)  # to get the title of the page
             with open('Title.txt', mode='a') as content:
                 content.write(link + "\t" + title + "\n")
     with open('Title.txt', mode='a') as content:
@@ -170,7 +169,7 @@ def write_page_title(internal, external, url):
 
 def get_meta(soup):
     """
-    :param soup:
+    :param soup: soup variable of the url
     :return: meta data of the soup element if exist
     """
     meta = soup.select('meta')
@@ -183,17 +182,16 @@ def get_meta(soup):
 
 def write_meta_data(internal, external, url):
     """
-    :param internal:
-    :param external:
-    :param url:
-    :return:
+    :param internal: set of internal links
+    :param external: set of external links
+    :param url: home url
     """
     with open('Metadata.txt', mode='a') as content:
         content.write("Internal Link meta data\n")
     for link in internal:
         if url in link:
-            soup_instance = get_soup(link)
-            meta_data = get_meta(soup_instance)
+            soup_instance = get_soup(link)  # generating soup variable
+            meta_data = get_meta(soup_instance)  # to get meta data
             with open('Metadata.txt', mode='a') as content:
                 for data in meta_data:
                     content.write(link + "\t" + str(data) + "\n")
@@ -210,13 +208,20 @@ def write_meta_data(internal, external, url):
 
 
 def write_main_page(text_content):
+    """
+    :param text_content: text without punctuation and stop words
+    writes the content of the homepage to a text(HomePageContent.txt) file
+    """
     with open('HomePageContent.txt', mode='a') as content:
         content.write(text_content)
 
 
 def get_uni_gram():
+    """
+    :return: uni_grams and its count in decreasing order
+    """
     file = open('HomePageContent.txt')
-    counts = {}
+    counts = {}  # to store uni_grams and its corresponding count
     for line in file:
         line = line.lower()
         words = line.split()
@@ -233,14 +238,18 @@ def get_uni_gram():
 
 
 def write_uni_grams():
-    file = open('top20_uni_gram.csv', mode="a", encoding='utf-8', newline='')
+    """
+    writes uni_grams ans its corresponding values into a file
+    :return:
+    """
+    file = open('top20_uni_gram.csv', mode="a", encoding='utf-8', newline='')  # to store top 20 uni_grams
     writer = csv.writer(file, delimiter=',')
     writer.writerow(['count', 'word'])
-    uni_gram_values = get_uni_gram()
+    uni_gram_values = get_uni_gram()  # to get all uni_grams
     for key, val in uni_gram_values[:20]:
         writer.writerow([key, val])
     file.close()
-    file = open('uni_gram.csv', mode="a", encoding='utf-8', newline='')
+    file = open('uni_gram.csv', mode="a", encoding='utf-8', newline='')  # to store all uni_grams
     writer = csv.writer(file, delimiter=',')
     writer.writerow(['count', 'word'])
     for key, val in uni_gram_values:
@@ -249,9 +258,12 @@ def write_uni_grams():
 
 
 def get_bi_grams():
+    """
+    :return: bi_grams and its count in decreasing order
+    """
     file = open('HomePageContent.txt')
     counts = {}
-    content = file.readlines()[0].split(" ")
+    content = file.readlines()[0].split(" ")  # to get all the text content from the file
     for i in range(len(content)):
         word_1 = content[i - 1].strip()
         word_2 = content[i].strip()
@@ -269,14 +281,17 @@ def get_bi_grams():
 
 
 def write_bi_grams():
-    file = open('top20_bi_gram.csv', mode="a", encoding='utf-8', newline='')
+    """
+    writes uni_grams ans its corresponding values into a file
+    """
+    file = open('top20_bi_gram.csv', mode="a", encoding='utf-8', newline='')  # to store top 20 bi_grams
     writer = csv.writer(file, delimiter=',')
     writer.writerow(['count', 'word'])
     uni_gram_values = get_bi_grams()
     for key, val in uni_gram_values[:20]:
         writer.writerow([key, val])
     file.close()
-    file = open('bi_gram.csv', mode="a", encoding='utf-8', newline='')
+    file = open('bi_gram.csv', mode="a", encoding='utf-8', newline='')  # to store all bi_grams
     writer = csv.writer(file, delimiter=',')
     writer.writerow(['count', 'word'])
     for key, val in uni_gram_values:
@@ -285,6 +300,10 @@ def write_bi_grams():
 
 
 def get_size(url):
+    """
+    :param url: url of the site
+    :return: size of the site
+    """
     return url
 
 
@@ -302,6 +321,12 @@ def get_size(url):
 
 
 def write_site_size(internal, external, url):
+    """
+    :param internal: set of internal links
+    :param external: set of external links
+    :param url: home url
+    Writes size of each site into a file
+    """
     file = open('SiteSize.csv', mode="a", encoding='utf-8', newline='')
     writer = csv.writer(file, delimiter=',')
     writer.writerow(['Site', 'Size(in kb)'])
@@ -315,19 +340,22 @@ def write_site_size(internal, external, url):
     file.close()
 
 
-home_url = get_home_url()
-home_soup = get_soup(home_url)
-internal_link, external_link = get_links(home_soup, home_url)
-# write_links(internal_link, external_link)
-# write_text(internal_link, home_url)
-# write_page_title(internal_link, external_link, home_url)
-# write_meta_data(internal_link, external_link, home_url)
+home_url = get_home_url()  # get the url from the user and convert it to home url
+home_soup = get_soup(home_url)  # soup variable of home url
 
-text_list = get_text_list_format(home_soup)
-no_stop_words_list = remove_stopwords(text_list)
-text = get_text(no_stop_words_list)
-no_punctuation_text = remove_punctuation(text)
-# write_main_page(no_punctuation_text)
-# write_uni_grams()
-# write_bi_grams()
-write_site_size(internal_link, external_link, home_url)
+internal_link, external_link = get_links(home_soup, home_url)  # to store internal and external links
+write_links(internal_link, external_link)  # write the internal and external links to a file
+
+text_list = get_text_list_format(home_soup)  # to get all words from the home url
+no_stop_words_list = remove_stopwords(text_list)  # to remove stop words
+home_text = get_text(no_stop_words_list)  # converting the list into string
+no_punctuation_text = remove_punctuation(home_text)  # to remove the punctuation
+write_main_page(no_punctuation_text)  # writing the text content of the home page into a file
+
+write_uni_grams()  # writing all uni_grams into a .csv file
+write_bi_grams()  # writing all bi_grams into a .csv file
+
+write_text(internal_link, home_url)  # to get the text form other url
+write_page_title(internal_link, external_link, home_url)  # to write page title of all sites into a file
+write_meta_data(internal_link, external_link, home_url)  # to write meta data of all sites into a file
+write_site_size(internal_link, external_link, home_url)  # to write the size of all the sites
